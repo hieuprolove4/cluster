@@ -1,0 +1,1832 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Customer Clustering Report</title>
+  <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+  <style>
+    :root {
+      --bg: #F4F6F9;
+      --card: #FFFFFF;
+      --text: #2C3E50;
+      --muted: #7F8C8D;
+      --radius: 10px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "Segoe UI", sans-serif; background: var(--bg);
+           color: var(--text); display: flex; min-height: 100vh; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 220px; min-height: 100vh; background: #2C3E50;
+      color: #ECF0F1; padding: 24px 16px; position: sticky;
+      top: 0; flex-shrink: 0;
+    }
+    .sidebar h3 { font-size: 13px; text-transform: uppercase;
+                  letter-spacing: 1px; color: #95A5A6; margin-bottom: 12px; }
+    .nav-item { list-style: none; }
+    .nav-link { display: block; padding: 8px 12px; border-radius: 6px;
+                text-decoration: none; margin-bottom: 4px;
+                transition: background .2s; font-size: 14px; }
+    .nav-link:hover { background: rgba(255,255,255,.1); }
+    .badge { border-radius: 12px; padding: 2px 7px; font-size: 11px; }
+
+    /* ── Main ── */
+    .main { flex: 1; padding: 32px 36px; max-width: calc(100vw - 220px); }
+    h1 { font-size: 28px; margin-bottom: 4px; }
+    .subtitle { color: var(--muted); margin-bottom: 28px; font-size: 14px; }
+
+    /* ── Pie card ── */
+    .card { background: var(--card); border-radius: var(--radius);
+             box-shadow: 0 2px 8px rgba(0,0,0,.08); overflow: hidden; }
+    .card-header { padding: 12px 18px; font-weight: 600; font-size: 15px; }
+    .card-body { padding: 16px; }
+    .pie-card { margin-bottom: 36px; }
+
+    /* ── Cluster section ── */
+    .cluster-section { margin-bottom: 48px; }
+    .section-header { display: flex; align-items: center; gap: 16px;
+                       padding: 12px 18px; background: var(--card);
+                       border-radius: var(--radius); margin-bottom: 18px;
+                       box-shadow: 0 2px 8px rgba(0,0,0,.07); }
+    .section-header h2 { font-size: 22px; }
+    .customer-count { margin-left: auto; background: #ECF0F1;
+                       border-radius: 20px; padding: 4px 14px;
+                       font-size: 13px; color: var(--muted); }
+
+    /* ── Stat table ── */
+    .stat-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .stat-table th, .stat-table td {
+      padding: 8px 14px; text-align: center; border-bottom: 1px solid #ECF0F1;
+    }
+    .stat-table th { background: #F8F9FA; font-weight: 600; }
+    .stat-table tr:last-child td { border-bottom: none; }
+
+    /* ── Charts ── */
+    .chart-row { display: flex; gap: 18px; margin-bottom: 20px; flex-wrap: wrap; }
+    .chart-box { flex: 1; min-width: 300px; background: var(--card);
+                  border-radius: var(--radius); padding: 8px;
+                  box-shadow: 0 2px 8px rgba(0,0,0,.07); }
+
+    /* ── Data table ── */
+    .detail-toggle { margin-top: 4px; }
+    .detail-toggle summary {
+      cursor: pointer; padding: 10px 16px; background: #ECF0F1;
+      border-radius: var(--radius); font-size: 14px; user-select: none;
+      font-weight: 600; color: var(--muted);
+    }
+    .detail-toggle summary:hover { background: #D5DBDB; }
+    .table-wrap { overflow-x: auto; margin-top: 10px; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .data-table th {
+      background: #2C3E50; color: #fff; padding: 9px 12px;
+      text-align: center; position: sticky; top: 0;
+    }
+    .data-table td { padding: 7px 12px; text-align: center;
+                      border-bottom: 1px solid #ECF0F1; }
+    .data-table tr:nth-child(even) td { background: #F8F9FA; }
+    .data-table tr:hover td { background: #EBF5FB; }
+
+    /* ── Footer ── */
+    .footer { margin-top: 48px; padding-top: 18px;
+               border-top: 1px solid #D5DBDB;
+               color: var(--muted); font-size: 12px; text-align: center; }
+  </style>
+</head>
+<body>
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar">
+  <h3>Noi dung</h3>
+  <ul class="nav-item" style="list-style:none;padding:0">
+    <li class="nav-item">
+      <a class="nav-link" href="#overview"
+         style="color:#BDC3C7;border-left:4px solid #95A5A6;margin-bottom:4px">
+        Tong quan
+      </a>
+    </li>
+    
+        <li class="nav-item">
+          <a class="nav-link" href="#sec-1"
+             style="border-left:4px solid #E74C3C; margin-bottom:4px; color:#E74C3C; font-weight:600;">
+            Cluster 1 &nbsp;<span class="badge"
+              style="background:#E74C3C;color:#fff">48</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#sec-2"
+             style="border-left:4px solid #27AE60; margin-bottom:4px; color:#27AE60; font-weight:600;">
+            Cluster 2 &nbsp;<span class="badge"
+              style="background:#27AE60;color:#fff">57</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#sec-3"
+             style="border-left:4px solid #2980B9; margin-bottom:4px; color:#2980B9; font-weight:600;">
+            Cluster 3 &nbsp;<span class="badge"
+              style="background:#2980B9;color:#fff">48</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#sec-4"
+             style="border-left:4px solid #8E44AD; margin-bottom:4px; color:#8E44AD; font-weight:600;">
+            Cluster 4 &nbsp;<span class="badge"
+              style="background:#8E44AD;color:#fff">47</span>
+          </a>
+        </li>
+  </ul>
+</aside>
+
+<!-- ── Main content ── -->
+<main class="main">
+  <h1>Customer Clustering Report</h1>
+  <p class="subtitle">Phan cum khach hang bang K-Means &mdash;
+     Cot phan cum: Age &amp; Spending Score</p>
+
+  <!-- Pie chart tong quan -->
+  <section id="overview">
+    <div class="card pie-card">
+      <div class="card-header" style="background:#2C3E50;color:#fff">
+        Phan bo khach hang theo cum (tong quan)
+      </div>
+      <div class="card-body"><div style="height:100%; width:100%;">                            <div id="43b350b4-7733-4213-b480-cc2ef9d938a4" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("43b350b4-7733-4213-b480-cc2ef9d938a4")) {                    Plotly.newPlot(                        "43b350b4-7733-4213-b480-cc2ef9d938a4",                        [{"domain":{"x":[0.0,1.0],"y":[0.0,1.0]},"hole":0.35,"hovertemplate":"label=%{label}\u003cbr\u003ecount=%{value}\u003cextra\u003e\u003c\u002fextra\u003e","labels":["Cluster 1","Cluster 2","Cluster 3","Cluster 4"],"legendgroup":"","name":"","showlegend":true,"values":{"dtype":"i1","bdata":"MDkwLw=="},"type":"pie","textinfo":"percent+label","textposition":"inside"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05}}},"legend":{"tracegroupgap":0,"orientation":"h","yanchor":"bottom","y":-0.2},"title":{"text":"Phan bo khach hang theo cum","font":{"size":20}},"piecolorway":["#E74C3C","#27AE60","#2980B9","#8E44AD"]},                        {"responsive": true}                    )                };            </script>        </div></div>
+    </div>
+  </section>
+
+  <!-- Tung cluster -->
+  
+        <section class="cluster-section" id="sec-1">
+          <div class="section-header" style="border-left:6px solid #E74C3C">
+            <h2 style="color:#E74C3C">Cluster 1</h2>
+            <span class="customer-count">48 khach hang</span>
+          </div>
+
+          <!-- Thong ke mo ta -->
+          <div class="card mb-3">
+            <div class="card-header" style="background:#E74C3C;color:#fff">
+              Thong ke mo ta (Age / Annual Income / Spending Score)
+            </div>
+            <div class="card-body"><table class="dataframe stat-table">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Age</th>
+      <th>Annual_Income</th>
+      <th>Spending_Score</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Trung binh</th>
+      <td>55.71</td>
+      <td>54.77</td>
+      <td>48.23</td>
+    </tr>
+    <tr>
+      <th>Nho nhat</th>
+      <td>43.00</td>
+      <td>38.00</td>
+      <td>35.00</td>
+    </tr>
+    <tr>
+      <th>Lon nhat</th>
+      <td>70.00</td>
+      <td>79.00</td>
+      <td>60.00</td>
+    </tr>
+  </tbody>
+</table></div>
+          </div>
+
+          <!-- Hai chart ben nhau -->
+          <div class="chart-row">
+            <div class="chart-box"><div style="height:100%; width:100%;">                            <div id="3bdc63ee-6380-4f0a-bb5f-aacdf85f969c" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("3bdc63ee-6380-4f0a-bb5f-aacdf85f969c")) {                    Plotly.newPlot(                        "3bdc63ee-6380-4f0a-bb5f-aacdf85f969c",                        [{"hovertemplate":"Nhom tuoi=%{x}\u003cbr\u003eThu nhap TB=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Thanh nien (\u003c=35)","marker":{"color":"#3498DB","pattern":{"shape":""}},"name":"Thanh nien (\u003c=35)","orientation":"v","showlegend":true,"textposition":"auto","texttemplate":"%{y:.1f}","x":["Thanh nien (\u003c=35)"],"xaxis":"x","y":{"dtype":"f8","bdata":"AAAAAAAA+H8="},"yaxis":"y","type":"bar"},{"hovertemplate":"Nhom tuoi=%{x}\u003cbr\u003eThu nhap TB=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Trung nien (36-44)","marker":{"color":"#E67E22","pattern":{"shape":""}},"name":"Trung nien (36-44)","orientation":"v","showlegend":true,"textposition":"auto","texttemplate":"%{y:.1f}","x":["Trung nien (36-44)"],"xaxis":"x","y":{"dtype":"f8","bdata":"AAAAAADATUA="},"yaxis":"y","type":"bar"},{"hovertemplate":"Nhom tuoi=%{x}\u003cbr\u003eThu nhap TB=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Nguoi cao tuoi (\u003e=45)","marker":{"color":"#2ECC71","pattern":{"shape":""}},"name":"Nguoi cao tuoi (\u003e=45)","orientation":"v","showlegend":true,"textposition":"auto","texttemplate":"%{y:.1f}","x":["Nguoi cao tuoi (\u003e=45)"],"xaxis":"x","y":{"dtype":"f8","bdata":"LWQhC1lIS0A="},"yaxis":"y","type":"bar"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05}}},"xaxis":{"anchor":"y","domain":[0.0,1.0],"title":{"text":"Nhom tuoi"},"categoryorder":"array","categoryarray":["Thanh nien (\u003c=35)","Trung nien (36-44)","Nguoi cao tuoi (\u003e=45)"]},"yaxis":{"anchor":"x","domain":[0.0,1.0],"title":{"text":"Annual Income (TB)"}},"legend":{"title":{"text":"Nhom tuoi"},"tracegroupgap":0},"title":{"text":"Cluster 1 - Do tuoi vs Annual Income"},"barmode":"relative","showlegend":false},                        {"responsive": true}                    )                };            </script>        </div></div>
+            <div class="chart-box"><div style="height:100%; width:100%;">                            <div id="8a2fab8e-919e-4a22-bd09-37bd11715343" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("8a2fab8e-919e-4a22-bd09-37bd11715343")) {                    Plotly.newPlot(                        "8a2fab8e-919e-4a22-bd09-37bd11715343",                        [{"hovertemplate":"Nhom tuoi=%{x}\u003cbr\u003eSpending Score TB=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Thanh nien (\u003c=35)","marker":{"color":"#E74C3C","pattern":{"shape":""}},"name":"Thanh nien (\u003c=35)","orientation":"v","showlegend":true,"textposition":"auto","texttemplate":"%{y:.1f}","x":["Thanh nien (\u003c=35)"],"xaxis":"x","y":{"dtype":"f8","bdata":"AAAAAAAA+H8="},"yaxis":"y","type":"bar"},{"hovertemplate":"Nhom tuoi=%{x}\u003cbr\u003eSpending Score TB=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Trung nien (36-44)","marker":{"color":"#9B59B6","pattern":{"shape":""}},"name":"Trung nien (36-44)","orientation":"v","showlegend":true,"textposition":"auto","texttemplate":"%{y:.1f}","x":["Trung nien (36-44)"],"xaxis":"x","y":{"dtype":"f8","bdata":"AAAAAABARUA="},"yaxis":"y","type":"bar"},{"hovertemplate":"Nhom tuoi=%{x}\u003cbr\u003eSpending Score TB=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Nguoi cao tuoi (\u003e=45)","marker":{"color":"#1ABC9C","pattern":{"shape":""}},"name":"Nguoi cao tuoi (\u003e=45)","orientation":"v","showlegend":true,"textposition":"auto","texttemplate":"%{y:.1f}","x":["Nguoi cao tuoi (\u003e=45)"],"xaxis":"x","y":{"dtype":"f8","bdata":"nN70pjc9SEA="},"yaxis":"y","type":"bar"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05}}},"xaxis":{"anchor":"y","domain":[0.0,1.0],"title":{"text":"Nhom tuoi"},"categoryorder":"array","categoryarray":["Thanh nien (\u003c=35)","Trung nien (36-44)","Nguoi cao tuoi (\u003e=45)"]},"yaxis":{"anchor":"x","domain":[0.0,1.0],"title":{"text":"Spending Score (TB)"}},"legend":{"title":{"text":"Nhom tuoi"},"tracegroupgap":0},"title":{"text":"Cluster 1 - Do tuoi vs Spending Score"},"barmode":"relative","showlegend":false},                        {"responsive": true}                    )                };            </script>        </div></div>
+          </div>
+
+          <!-- Bang du lieu chi tiet -->
+          <details class="detail-toggle">
+            <summary>Xem du lieu chi tiet (48 dong)</summary>
+            <div class="table-wrap"><table class="dataframe data-table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>CustomerId</th>
+      <th>Age</th>
+      <th>Annual_Income</th>
+      <th>Spending_Score</th>
+      <th>cluster</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>41</td>
+      <td>65</td>
+      <td>38</td>
+      <td>35</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>43</td>
+      <td>48</td>
+      <td>39</td>
+      <td>36</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>47</td>
+      <td>50</td>
+      <td>40</td>
+      <td>55</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>51</td>
+      <td>49</td>
+      <td>42</td>
+      <td>52</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>54</td>
+      <td>59</td>
+      <td>43</td>
+      <td>60</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>55</td>
+      <td>50</td>
+      <td>43</td>
+      <td>45</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>56</td>
+      <td>47</td>
+      <td>43</td>
+      <td>41</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>57</td>
+      <td>51</td>
+      <td>44</td>
+      <td>50</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>58</td>
+      <td>69</td>
+      <td>44</td>
+      <td>46</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>60</td>
+      <td>53</td>
+      <td>46</td>
+      <td>46</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>61</td>
+      <td>70</td>
+      <td>46</td>
+      <td>56</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>63</td>
+      <td>67</td>
+      <td>47</td>
+      <td>52</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>64</td>
+      <td>54</td>
+      <td>47</td>
+      <td>59</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>65</td>
+      <td>63</td>
+      <td>48</td>
+      <td>51</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>67</td>
+      <td>43</td>
+      <td>48</td>
+      <td>50</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>68</td>
+      <td>68</td>
+      <td>48</td>
+      <td>48</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>71</td>
+      <td>70</td>
+      <td>49</td>
+      <td>55</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>72</td>
+      <td>47</td>
+      <td>49</td>
+      <td>42</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>73</td>
+      <td>60</td>
+      <td>50</td>
+      <td>49</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>74</td>
+      <td>60</td>
+      <td>50</td>
+      <td>56</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>75</td>
+      <td>59</td>
+      <td>54</td>
+      <td>47</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>77</td>
+      <td>45</td>
+      <td>54</td>
+      <td>53</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>80</td>
+      <td>49</td>
+      <td>54</td>
+      <td>42</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>81</td>
+      <td>57</td>
+      <td>54</td>
+      <td>51</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>83</td>
+      <td>67</td>
+      <td>54</td>
+      <td>41</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>84</td>
+      <td>46</td>
+      <td>54</td>
+      <td>44</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>86</td>
+      <td>48</td>
+      <td>54</td>
+      <td>46</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>87</td>
+      <td>55</td>
+      <td>57</td>
+      <td>58</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>90</td>
+      <td>50</td>
+      <td>58</td>
+      <td>46</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>91</td>
+      <td>68</td>
+      <td>59</td>
+      <td>55</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>93</td>
+      <td>48</td>
+      <td>60</td>
+      <td>49</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>97</td>
+      <td>47</td>
+      <td>60</td>
+      <td>47</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>99</td>
+      <td>48</td>
+      <td>61</td>
+      <td>42</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>102</td>
+      <td>49</td>
+      <td>62</td>
+      <td>48</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>103</td>
+      <td>67</td>
+      <td>62</td>
+      <td>59</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>105</td>
+      <td>49</td>
+      <td>62</td>
+      <td>56</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>107</td>
+      <td>66</td>
+      <td>63</td>
+      <td>50</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>108</td>
+      <td>54</td>
+      <td>63</td>
+      <td>46</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>109</td>
+      <td>68</td>
+      <td>63</td>
+      <td>43</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>110</td>
+      <td>66</td>
+      <td>63</td>
+      <td>48</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>111</td>
+      <td>65</td>
+      <td>63</td>
+      <td>52</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>117</td>
+      <td>63</td>
+      <td>65</td>
+      <td>43</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>118</td>
+      <td>49</td>
+      <td>65</td>
+      <td>59</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>119</td>
+      <td>51</td>
+      <td>67</td>
+      <td>43</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>120</td>
+      <td>50</td>
+      <td>67</td>
+      <td>57</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>127</td>
+      <td>43</td>
+      <td>71</td>
+      <td>35</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>147</td>
+      <td>48</td>
+      <td>77</td>
+      <td>36</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>161</td>
+      <td>56</td>
+      <td>79</td>
+      <td>35</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table></div>
+          </details>
+        </section>
+        <section class="cluster-section" id="sec-2">
+          <div class="section-header" style="border-left:6px solid #27AE60">
+            <h2 style="color:#27AE60">Cluster 2</h2>
+            <span class="customer-count">57 khach hang</span>
+          </div>
+
+          <!-- Thong ke mo ta -->
+          <div class="card mb-3">
+            <div class="card-header" style="background:#27AE60;color:#fff">
+              Thong ke mo ta (Age / Annual Income / Spending Score)
+            </div>
+            <div class="card-body"><table class="dataframe stat-table">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Age</th>
+      <th>Annual_Income</th>
+      <th>Spending_Score</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Trung binh</th>
+      <td>30.18</td>
+      <td>66.07</td>
+      <td>82.35</td>
+    </tr>
+    <tr>
+      <th>Nho nhat</th>
+      <td>18.00</td>
+      <td>15.00</td>
+      <td>68.00</td>
+    </tr>
+    <tr>
+      <th>Lon nhat</th>
+      <td>40.00</td>
+      <td>137.00</td>
+      <td>99.00</td>
+    </tr>
+  </tbody>
+</table></div>
+          </div>
+
+          <!-- Hai chart ben nhau -->
+          <div class="chart-row">
+            <div class="chart-box"><div style="height:100%; width:100%;">                            <div id="7d8ecb48-d21b-44cd-9343-1f251005aa49" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("7d8ecb48-d21b-44cd-9343-1f251005aa49")) {                    Plotly.newPlot(                        "7d8ecb48-d21b-44cd-9343-1f251005aa49",                        [{"hovertemplate":"Nhom tuoi=%{x}\u003cbr\u003eThu nhap TB=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Thanh nien (\u003c=35)","marker":{"color":"#3498DB","pattern":{"shape":""}},"name":"Thanh nien (\u003c=35)","orientation":"v","showlegend":true,"textposition":"auto","texttemplate":"%{y:.1f}","x":["Thanh nien (\u003c=35)"],"xaxis":"x","y":{"dtype":"f8","bdata":"9Z2N+s5GT0A="},"yaxis":"y","type":"bar"},{"hovertemplate":"Nhom tuoi=%{x}\u003cbr\u003eThu nhap TB=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Trung nien (36-44)","marker":{"color":"#E67E22","pattern":{"shape":""}},"name":"Trung nien (36-44)","orientation":"v","showlegend":true,"textposition":"auto","texttemplate":"%{y:.1f}","x":["Trung nien (36-44)"],"xaxis":"x","y":{"dtype":"f8","bdata":"ZmZmZmamVEA="},"yaxis":"y","type":"bar"},{"hovertemplate":"Nhom tuoi=%{x}\u003cbr\u003eThu nhap TB=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Nguoi cao tuoi (\u003e=45)","marker":{"color":"#2ECC71","pattern":{"shape":""}},"name":"Nguoi cao tuoi (\u003e=45)","orientation":"v","showlegend":true,"textposition":"auto","texttemplate":"%{y:.1f}","x":["Nguoi cao tuoi (\u003e=45)"],"xaxis":"x","y":{"dtype":"f8","bdata":"AAAAAAAA+H8="},"yaxis":"y","type":"bar"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05}}},"xaxis":{"anchor":"y","domain":[0.0,1.0],"title":{"text":"Nhom tuoi"},"categoryorder":"array","categoryarray":["Thanh nien (\u003c=35)","Trung nien (36-44)","Nguoi cao tuoi (\u003e=45)"]},"yaxis":{"anchor":"x","domain":[0.0,1.0],"title":{"text":"Annual Income (TB)"}},"legend":{"title":{"text":"Nhom tuoi"},"tracegroupgap":0},"title":{"text":"Cluster 2 - Do tuoi vs Annual Income"},"barmode":"relative","showlegend":false},                        {"responsive": true}                    )                };            </script>        </div></div>
+            <div class="chart-box"><div style="height:100%; width:100%;">                            <div id="3b821eb0-0f2a-4fe9-b348-c2ff626c40ee" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("3b821eb0-0f2a-4fe9-b348-c2ff626c40ee")) {                    Plotly.newPlot(                        "3b821eb0-0f2a-4fe9-b348-c2ff626c40ee",                        [{"hovertemplate":"Nhom tuoi=%{x}\u003cbr\u003eSpending Score TB=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Thanh nien (\u003c=35)","marker":{"color":"#E74C3C","pattern":{"shape":""}},"name":"Thanh nien (\u003c=35)","orientation":"v","showlegend":true,"textposition":"auto","texttemplate":"%{y:.1f}","x":["Thanh nien (\u003c=35)"],"xaxis":"x","y":{"dtype":"f8","bdata":"bdR3Nup7VEA="},"yaxis":"y","type":"bar"},{"hovertemplate":"Nhom tuoi=%{x}\u003cbr\u003eSpending Score TB=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Trung nien (36-44)","marker":{"color":"#9B59B6","pattern":{"shape":""}},"name":"Trung nien (36-44)","orientation":"v","showlegend":true,"textposition":"auto","texttemplate":"%{y:.1f}","x":["Trung nien (36-44)"],"xaxis":"x","y":{"dtype":"f8","bdata":"MzMzMzMTVUA="},"yaxis":"y","type":"bar"},{"hovertemplate":"Nhom tuoi=%{x}\u003cbr\u003eSpending Score TB=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Nguoi cao tuoi (\u003e=45)","marker":{"color":"#1ABC9C","pattern":{"shape":""}},"name":"Nguoi cao tuoi (\u003e=45)","orientation":"v","showlegend":true,"textposition":"auto","texttemplate":"%{y:.1f}","x":["Nguoi cao tuoi (\u003e=45)"],"xaxis":"x","y":{"dtype":"f8","bdata":"AAAAAAAA+H8="},"yaxis":"y","type":"bar"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05}}},"xaxis":{"anchor":"y","domain":[0.0,1.0],"title":{"text":"Nhom tuoi"},"categoryorder":"array","categoryarray":["Thanh nien (\u003c=35)","Trung nien (36-44)","Nguoi cao tuoi (\u003e=45)"]},"yaxis":{"anchor":"x","domain":[0.0,1.0],"title":{"text":"Spending Score (TB)"}},"legend":{"title":{"text":"Nhom tuoi"},"tracegroupgap":0},"title":{"text":"Cluster 2 - Do tuoi vs Spending Score"},"barmode":"relative","showlegend":false},                        {"responsive": true}                    )                };            </script>        </div></div>
+          </div>
+
+          <!-- Bang du lieu chi tiet -->
+          <details class="detail-toggle">
+            <summary>Xem du lieu chi tiet (57 dong)</summary>
+            <div class="table-wrap"><table class="dataframe data-table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>CustomerId</th>
+      <th>Age</th>
+      <th>Annual_Income</th>
+      <th>Spending_Score</th>
+      <th>cluster</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>2</td>
+      <td>21</td>
+      <td>15</td>
+      <td>81</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>23</td>
+      <td>16</td>
+      <td>77</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>22</td>
+      <td>17</td>
+      <td>76</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>23</td>
+      <td>18</td>
+      <td>94</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td>30</td>
+      <td>19</td>
+      <td>72</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>12</td>
+      <td>35</td>
+      <td>19</td>
+      <td>99</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>14</td>
+      <td>24</td>
+      <td>20</td>
+      <td>77</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>16</td>
+      <td>22</td>
+      <td>20</td>
+      <td>79</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>20</td>
+      <td>35</td>
+      <td>23</td>
+      <td>98</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>22</td>
+      <td>25</td>
+      <td>24</td>
+      <td>73</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>24</td>
+      <td>31</td>
+      <td>25</td>
+      <td>73</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>26</td>
+      <td>29</td>
+      <td>28</td>
+      <td>82</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>30</td>
+      <td>23</td>
+      <td>29</td>
+      <td>87</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>32</td>
+      <td>21</td>
+      <td>30</td>
+      <td>73</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>34</td>
+      <td>18</td>
+      <td>33</td>
+      <td>92</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>36</td>
+      <td>21</td>
+      <td>33</td>
+      <td>81</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>38</td>
+      <td>30</td>
+      <td>34</td>
+      <td>73</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>40</td>
+      <td>20</td>
+      <td>37</td>
+      <td>75</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>42</td>
+      <td>24</td>
+      <td>38</td>
+      <td>92</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>124</td>
+      <td>39</td>
+      <td>69</td>
+      <td>91</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>126</td>
+      <td>31</td>
+      <td>70</td>
+      <td>77</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>128</td>
+      <td>40</td>
+      <td>71</td>
+      <td>95</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>130</td>
+      <td>38</td>
+      <td>71</td>
+      <td>75</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>132</td>
+      <td>39</td>
+      <td>71</td>
+      <td>75</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>134</td>
+      <td>31</td>
+      <td>72</td>
+      <td>71</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>136</td>
+      <td>29</td>
+      <td>73</td>
+      <td>88</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>138</td>
+      <td>32</td>
+      <td>73</td>
+      <td>73</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>140</td>
+      <td>35</td>
+      <td>74</td>
+      <td>72</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>142</td>
+      <td>32</td>
+      <td>75</td>
+      <td>93</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>144</td>
+      <td>32</td>
+      <td>76</td>
+      <td>87</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>146</td>
+      <td>28</td>
+      <td>77</td>
+      <td>97</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>148</td>
+      <td>32</td>
+      <td>77</td>
+      <td>74</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>150</td>
+      <td>34</td>
+      <td>78</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>152</td>
+      <td>39</td>
+      <td>78</td>
+      <td>88</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>154</td>
+      <td>38</td>
+      <td>78</td>
+      <td>76</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>156</td>
+      <td>27</td>
+      <td>78</td>
+      <td>89</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>158</td>
+      <td>30</td>
+      <td>78</td>
+      <td>78</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>160</td>
+      <td>30</td>
+      <td>78</td>
+      <td>73</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>162</td>
+      <td>29</td>
+      <td>79</td>
+      <td>83</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>164</td>
+      <td>31</td>
+      <td>81</td>
+      <td>93</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>166</td>
+      <td>36</td>
+      <td>85</td>
+      <td>75</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>168</td>
+      <td>33</td>
+      <td>86</td>
+      <td>95</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>172</td>
+      <td>28</td>
+      <td>87</td>
+      <td>75</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>174</td>
+      <td>36</td>
+      <td>87</td>
+      <td>92</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>176</td>
+      <td>30</td>
+      <td>88</td>
+      <td>86</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>178</td>
+      <td>27</td>
+      <td>88</td>
+      <td>69</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>180</td>
+      <td>35</td>
+      <td>93</td>
+      <td>90</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>182</td>
+      <td>32</td>
+      <td>97</td>
+      <td>86</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>184</td>
+      <td>29</td>
+      <td>98</td>
+      <td>88</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>186</td>
+      <td>30</td>
+      <td>99</td>
+      <td>97</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>188</td>
+      <td>28</td>
+      <td>101</td>
+      <td>68</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>190</td>
+      <td>36</td>
+      <td>103</td>
+      <td>85</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>192</td>
+      <td>32</td>
+      <td>103</td>
+      <td>69</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>194</td>
+      <td>38</td>
+      <td>113</td>
+      <td>91</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>196</td>
+      <td>35</td>
+      <td>120</td>
+      <td>79</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>198</td>
+      <td>32</td>
+      <td>126</td>
+      <td>74</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>200</td>
+      <td>30</td>
+      <td>137</td>
+      <td>83</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table></div>
+          </details>
+        </section>
+        <section class="cluster-section" id="sec-3">
+          <div class="section-header" style="border-left:6px solid #2980B9">
+            <h2 style="color:#2980B9">Cluster 3</h2>
+            <span class="customer-count">48 khach hang</span>
+          </div>
+
+          <!-- Thong ke mo ta -->
+          <div class="card mb-3">
+            <div class="card-header" style="background:#2980B9;color:#fff">
+              Thong ke mo ta (Age / Annual Income / Spending Score)
+            </div>
+            <div class="card-body"><table class="dataframe stat-table">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Age</th>
+      <th>Annual_Income</th>
+      <th>Spending_Score</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Trung binh</th>
+      <td>43.29</td>
+      <td>66.94</td>
+      <td>15.02</td>
+    </tr>
+    <tr>
+      <th>Nho nhat</th>
+      <td>19.00</td>
+      <td>16.00</td>
+      <td>1.00</td>
+    </tr>
+    <tr>
+      <th>Lon nhat</th>
+      <td>67.00</td>
+      <td>137.00</td>
+      <td>32.00</td>
+    </tr>
+  </tbody>
+</table></div>
+          </div>
+
+          <!-- Hai chart ben nhau -->
+          <div class="chart-row">
+            <div class="chart-box"><div style="height:100%; width:100%;">                            <div id="b1136e00-3c8e-499e-8201-748460f2daaa" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("b1136e00-3c8e-499e-8201-748460f2daaa")) {                    Plotly.newPlot(                        "b1136e00-3c8e-499e-8201-748460f2daaa",                        [{"hovertemplate":"Nhom tuoi=%{x}\u003cbr\u003eThu nhap TB=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Thanh nien (\u003c=35)","marker":{"color":"#3498DB","pattern":{"shape":""}},"name":"Thanh nien (\u003c=35)","orientation":"v","showlegend":true,"textposition":"auto","texttemplate":"%{y:.1f}","x":["Thanh nien (\u003c=35)"],"xaxis":"x","y":{"dtype":"f8","bdata":"RhdddNFFU0A="},"yaxis":"y","type":"bar"},{"hovertemplate":"Nhom tuoi=%{x}\u003cbr\u003eThu nhap TB=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Trung nien (36-44)","marker":{"color":"#E67E22","pattern":{"shape":""}},"name":"Trung nien (36-44)","orientation":"v","showlegend":true,"textposition":"auto","texttemplate":"%{y:.1f}","x":["Trung nien (36-44)"],"xaxis":"x","y":{"dtype":"f8","bdata":"SZIkSZJkUUA="},"yaxis":"y","type":"bar"},{"hovertemplate":"Nhom tuoi=%{x}\u003cbr\u003eThu nhap TB=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Nguoi cao tuoi (\u003e=45)","marker":{"color":"#2ECC71","pattern":{"shape":""}},"name":"Nguoi cao tuoi (\u003e=45)","orientation":"v","showlegend":true,"textposition":"auto","texttemplate":"%{y:.1f}","x":["Nguoi cao tuoi (\u003e=45)"],"xaxis":"x","y":{"dtype":"f8","bdata":"nN70pjc9TkA="},"yaxis":"y","type":"bar"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05}}},"xaxis":{"anchor":"y","domain":[0.0,1.0],"title":{"text":"Nhom tuoi"},"categoryorder":"array","categoryarray":["Thanh nien (\u003c=35)","Trung nien (36-44)","Nguoi cao tuoi (\u003e=45)"]},"yaxis":{"anchor":"x","domain":[0.0,1.0],"title":{"text":"Annual Income (TB)"}},"legend":{"title":{"text":"Nhom tuoi"},"tracegroupgap":0},"title":{"text":"Cluster 3 - Do tuoi vs Annual Income"},"barmode":"relative","showlegend":false},                        {"responsive": true}                    )                };            </script>        </div></div>
+            <div class="chart-box"><div style="height:100%; width:100%;">                            <div id="5957c336-597b-4284-95c6-781e84faf3ad" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("5957c336-597b-4284-95c6-781e84faf3ad")) {                    Plotly.newPlot(                        "5957c336-597b-4284-95c6-781e84faf3ad",                        [{"hovertemplate":"Nhom tuoi=%{x}\u003cbr\u003eSpending Score TB=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Thanh nien (\u003c=35)","marker":{"color":"#E74C3C","pattern":{"shape":""}},"name":"Thanh nien (\u003c=35)","orientation":"v","showlegend":true,"textposition":"auto","texttemplate":"%{y:.1f}","x":["Thanh nien (\u003c=35)"],"xaxis":"x","y":{"dtype":"f8","bdata":"F1100UUXJUA="},"yaxis":"y","type":"bar"},{"hovertemplate":"Nhom tuoi=%{x}\u003cbr\u003eSpending Score TB=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Trung nien (36-44)","marker":{"color":"#9B59B6","pattern":{"shape":""}},"name":"Trung nien (36-44)","orientation":"v","showlegend":true,"textposition":"auto","texttemplate":"%{y:.1f}","x":["Trung nien (36-44)"],"xaxis":"x","y":{"dtype":"f8","bdata":"27Zt27btMUA="},"yaxis":"y","type":"bar"},{"hovertemplate":"Nhom tuoi=%{x}\u003cbr\u003eSpending Score TB=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Nguoi cao tuoi (\u003e=45)","marker":{"color":"#1ABC9C","pattern":{"shape":""}},"name":"Nguoi cao tuoi (\u003e=45)","orientation":"v","showlegend":true,"textposition":"auto","texttemplate":"%{y:.1f}","x":["Nguoi cao tuoi (\u003e=45)"],"xaxis":"x","y":{"dtype":"f8","bdata":"LWQhC1nILkA="},"yaxis":"y","type":"bar"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05}}},"xaxis":{"anchor":"y","domain":[0.0,1.0],"title":{"text":"Nhom tuoi"},"categoryorder":"array","categoryarray":["Thanh nien (\u003c=35)","Trung nien (36-44)","Nguoi cao tuoi (\u003e=45)"]},"yaxis":{"anchor":"x","domain":[0.0,1.0],"title":{"text":"Spending Score (TB)"}},"legend":{"title":{"text":"Nhom tuoi"},"tracegroupgap":0},"title":{"text":"Cluster 3 - Do tuoi vs Spending Score"},"barmode":"relative","showlegend":false},                        {"responsive": true}                    )                };            </script>        </div></div>
+          </div>
+
+          <!-- Bang du lieu chi tiet -->
+          <details class="detail-toggle">
+            <summary>Xem du lieu chi tiet (48 dong)</summary>
+            <div class="table-wrap"><table class="dataframe data-table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>CustomerId</th>
+      <th>Age</th>
+      <th>Annual_Income</th>
+      <th>Spending_Score</th>
+      <th>cluster</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>3</td>
+      <td>20</td>
+      <td>16</td>
+      <td>6</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>35</td>
+      <td>18</td>
+      <td>6</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td>64</td>
+      <td>19</td>
+      <td>3</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>11</td>
+      <td>67</td>
+      <td>19</td>
+      <td>14</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>13</td>
+      <td>58</td>
+      <td>20</td>
+      <td>15</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>15</td>
+      <td>37</td>
+      <td>20</td>
+      <td>13</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>19</td>
+      <td>52</td>
+      <td>23</td>
+      <td>29</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>23</td>
+      <td>46</td>
+      <td>25</td>
+      <td>5</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>25</td>
+      <td>54</td>
+      <td>28</td>
+      <td>14</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>27</td>
+      <td>45</td>
+      <td>28</td>
+      <td>32</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>29</td>
+      <td>40</td>
+      <td>29</td>
+      <td>31</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>31</td>
+      <td>60</td>
+      <td>30</td>
+      <td>4</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>33</td>
+      <td>53</td>
+      <td>33</td>
+      <td>4</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>35</td>
+      <td>49</td>
+      <td>33</td>
+      <td>14</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>37</td>
+      <td>42</td>
+      <td>34</td>
+      <td>17</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>39</td>
+      <td>36</td>
+      <td>37</td>
+      <td>26</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>45</td>
+      <td>49</td>
+      <td>39</td>
+      <td>28</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>129</td>
+      <td>59</td>
+      <td>71</td>
+      <td>11</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>131</td>
+      <td>47</td>
+      <td>71</td>
+      <td>9</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>135</td>
+      <td>20</td>
+      <td>73</td>
+      <td>5</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>137</td>
+      <td>44</td>
+      <td>73</td>
+      <td>7</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>139</td>
+      <td>19</td>
+      <td>74</td>
+      <td>10</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>141</td>
+      <td>57</td>
+      <td>75</td>
+      <td>5</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>145</td>
+      <td>25</td>
+      <td>77</td>
+      <td>12</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>149</td>
+      <td>34</td>
+      <td>78</td>
+      <td>22</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>151</td>
+      <td>43</td>
+      <td>78</td>
+      <td>17</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>153</td>
+      <td>44</td>
+      <td>78</td>
+      <td>20</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>155</td>
+      <td>47</td>
+      <td>78</td>
+      <td>16</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>157</td>
+      <td>37</td>
+      <td>78</td>
+      <td>1</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>159</td>
+      <td>34</td>
+      <td>78</td>
+      <td>1</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>163</td>
+      <td>19</td>
+      <td>81</td>
+      <td>5</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>165</td>
+      <td>50</td>
+      <td>85</td>
+      <td>26</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>167</td>
+      <td>42</td>
+      <td>86</td>
+      <td>20</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>169</td>
+      <td>36</td>
+      <td>87</td>
+      <td>27</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>171</td>
+      <td>40</td>
+      <td>87</td>
+      <td>13</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>173</td>
+      <td>36</td>
+      <td>87</td>
+      <td>10</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>175</td>
+      <td>52</td>
+      <td>88</td>
+      <td>13</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>177</td>
+      <td>58</td>
+      <td>88</td>
+      <td>15</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>179</td>
+      <td>59</td>
+      <td>93</td>
+      <td>14</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>181</td>
+      <td>37</td>
+      <td>97</td>
+      <td>32</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>183</td>
+      <td>46</td>
+      <td>98</td>
+      <td>15</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>187</td>
+      <td>54</td>
+      <td>101</td>
+      <td>24</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>189</td>
+      <td>41</td>
+      <td>103</td>
+      <td>17</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>191</td>
+      <td>34</td>
+      <td>103</td>
+      <td>23</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>193</td>
+      <td>33</td>
+      <td>113</td>
+      <td>8</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>195</td>
+      <td>47</td>
+      <td>120</td>
+      <td>16</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>197</td>
+      <td>45</td>
+      <td>126</td>
+      <td>28</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>199</td>
+      <td>32</td>
+      <td>137</td>
+      <td>18</td>
+      <td>2</td>
+    </tr>
+  </tbody>
+</table></div>
+          </details>
+        </section>
+        <section class="cluster-section" id="sec-4">
+          <div class="section-header" style="border-left:6px solid #8E44AD">
+            <h2 style="color:#8E44AD">Cluster 4</h2>
+            <span class="customer-count">47 khach hang</span>
+          </div>
+
+          <!-- Thong ke mo ta -->
+          <div class="card mb-3">
+            <div class="card-header" style="background:#8E44AD;color:#fff">
+              Thong ke mo ta (Age / Annual Income / Spending Score)
+            </div>
+            <div class="card-body"><table class="dataframe stat-table">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Age</th>
+      <th>Annual_Income</th>
+      <th>Spending_Score</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Trung binh</th>
+      <td>27.62</td>
+      <td>53.28</td>
+      <td>49.15</td>
+    </tr>
+    <tr>
+      <th>Nho nhat</th>
+      <td>18.00</td>
+      <td>15.00</td>
+      <td>29.00</td>
+    </tr>
+    <tr>
+      <th>Lon nhat</th>
+      <td>41.00</td>
+      <td>99.00</td>
+      <td>66.00</td>
+    </tr>
+  </tbody>
+</table></div>
+          </div>
+
+          <!-- Hai chart ben nhau -->
+          <div class="chart-row">
+            <div class="chart-box"><div style="height:100%; width:100%;">                            <div id="467105c8-1e1e-4a1e-9899-961e75169aec" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("467105c8-1e1e-4a1e-9899-961e75169aec")) {                    Plotly.newPlot(                        "467105c8-1e1e-4a1e-9899-961e75169aec",                        [{"hovertemplate":"Nhom tuoi=%{x}\u003cbr\u003eThu nhap TB=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Thanh nien (\u003c=35)","marker":{"color":"#3498DB","pattern":{"shape":""}},"name":"Thanh nien (\u003c=35)","orientation":"v","showlegend":true,"textposition":"auto","texttemplate":"%{y:.1f}","x":["Thanh nien (\u003c=35)"],"xaxis":"x","y":{"dtype":"f8","bdata":"ZmZmZmZ2SUA="},"yaxis":"y","type":"bar"},{"hovertemplate":"Nhom tuoi=%{x}\u003cbr\u003eThu nhap TB=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Trung nien (36-44)","marker":{"color":"#E67E22","pattern":{"shape":""}},"name":"Trung nien (36-44)","orientation":"v","showlegend":true,"textposition":"auto","texttemplate":"%{y:.1f}","x":["Trung nien (36-44)"],"xaxis":"x","y":{"dtype":"f8","bdata":"27Zt27atUEA="},"yaxis":"y","type":"bar"},{"hovertemplate":"Nhom tuoi=%{x}\u003cbr\u003eThu nhap TB=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Nguoi cao tuoi (\u003e=45)","marker":{"color":"#2ECC71","pattern":{"shape":""}},"name":"Nguoi cao tuoi (\u003e=45)","orientation":"v","showlegend":true,"textposition":"auto","texttemplate":"%{y:.1f}","x":["Nguoi cao tuoi (\u003e=45)"],"xaxis":"x","y":{"dtype":"f8","bdata":"AAAAAAAA+H8="},"yaxis":"y","type":"bar"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05}}},"xaxis":{"anchor":"y","domain":[0.0,1.0],"title":{"text":"Nhom tuoi"},"categoryorder":"array","categoryarray":["Thanh nien (\u003c=35)","Trung nien (36-44)","Nguoi cao tuoi (\u003e=45)"]},"yaxis":{"anchor":"x","domain":[0.0,1.0],"title":{"text":"Annual Income (TB)"}},"legend":{"title":{"text":"Nhom tuoi"},"tracegroupgap":0},"title":{"text":"Cluster 4 - Do tuoi vs Annual Income"},"barmode":"relative","showlegend":false},                        {"responsive": true}                    )                };            </script>        </div></div>
+            <div class="chart-box"><div style="height:100%; width:100%;">                            <div id="f8dc5334-d51a-4421-a5c4-5936788f4d99" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("f8dc5334-d51a-4421-a5c4-5936788f4d99")) {                    Plotly.newPlot(                        "f8dc5334-d51a-4421-a5c4-5936788f4d99",                        [{"hovertemplate":"Nhom tuoi=%{x}\u003cbr\u003eSpending Score TB=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Thanh nien (\u003c=35)","marker":{"color":"#E74C3C","pattern":{"shape":""}},"name":"Thanh nien (\u003c=35)","orientation":"v","showlegend":true,"textposition":"auto","texttemplate":"%{y:.1f}","x":["Thanh nien (\u003c=35)"],"xaxis":"x","y":{"dtype":"f8","bdata":"mpmZmZnZSEA="},"yaxis":"y","type":"bar"},{"hovertemplate":"Nhom tuoi=%{x}\u003cbr\u003eSpending Score TB=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Trung nien (36-44)","marker":{"color":"#9B59B6","pattern":{"shape":""}},"name":"Trung nien (36-44)","orientation":"v","showlegend":true,"textposition":"auto","texttemplate":"%{y:.1f}","x":["Trung nien (36-44)"],"xaxis":"x","y":{"dtype":"f8","bdata":"AAAAAAAAR0A="},"yaxis":"y","type":"bar"},{"hovertemplate":"Nhom tuoi=%{x}\u003cbr\u003eSpending Score TB=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Nguoi cao tuoi (\u003e=45)","marker":{"color":"#1ABC9C","pattern":{"shape":""}},"name":"Nguoi cao tuoi (\u003e=45)","orientation":"v","showlegend":true,"textposition":"auto","texttemplate":"%{y:.1f}","x":["Nguoi cao tuoi (\u003e=45)"],"xaxis":"x","y":{"dtype":"f8","bdata":"AAAAAAAA+H8="},"yaxis":"y","type":"bar"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05}}},"xaxis":{"anchor":"y","domain":[0.0,1.0],"title":{"text":"Nhom tuoi"},"categoryorder":"array","categoryarray":["Thanh nien (\u003c=35)","Trung nien (36-44)","Nguoi cao tuoi (\u003e=45)"]},"yaxis":{"anchor":"x","domain":[0.0,1.0],"title":{"text":"Spending Score (TB)"}},"legend":{"title":{"text":"Nhom tuoi"},"tracegroupgap":0},"title":{"text":"Cluster 4 - Do tuoi vs Spending Score"},"barmode":"relative","showlegend":false},                        {"responsive": true}                    )                };            </script>        </div></div>
+          </div>
+
+          <!-- Bang du lieu chi tiet -->
+          <details class="detail-toggle">
+            <summary>Xem du lieu chi tiet (47 dong)</summary>
+            <div class="table-wrap"><table class="dataframe data-table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>CustomerId</th>
+      <th>Age</th>
+      <th>Annual_Income</th>
+      <th>Spending_Score</th>
+      <th>cluster</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>19</td>
+      <td>15</td>
+      <td>39</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>31</td>
+      <td>17</td>
+      <td>40</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>17</td>
+      <td>35</td>
+      <td>21</td>
+      <td>35</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>18</td>
+      <td>20</td>
+      <td>21</td>
+      <td>66</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>21</td>
+      <td>35</td>
+      <td>24</td>
+      <td>35</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>28</td>
+      <td>35</td>
+      <td>28</td>
+      <td>61</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>44</td>
+      <td>31</td>
+      <td>39</td>
+      <td>61</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>46</td>
+      <td>24</td>
+      <td>39</td>
+      <td>65</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>48</td>
+      <td>27</td>
+      <td>40</td>
+      <td>47</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>49</td>
+      <td>29</td>
+      <td>40</td>
+      <td>42</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>50</td>
+      <td>31</td>
+      <td>40</td>
+      <td>42</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>52</td>
+      <td>33</td>
+      <td>42</td>
+      <td>60</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>53</td>
+      <td>31</td>
+      <td>43</td>
+      <td>54</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>59</td>
+      <td>27</td>
+      <td>46</td>
+      <td>51</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>62</td>
+      <td>19</td>
+      <td>46</td>
+      <td>55</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>66</td>
+      <td>18</td>
+      <td>48</td>
+      <td>59</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>69</td>
+      <td>19</td>
+      <td>48</td>
+      <td>59</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>70</td>
+      <td>32</td>
+      <td>48</td>
+      <td>47</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>76</td>
+      <td>26</td>
+      <td>54</td>
+      <td>54</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>78</td>
+      <td>40</td>
+      <td>54</td>
+      <td>48</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>79</td>
+      <td>23</td>
+      <td>54</td>
+      <td>52</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>82</td>
+      <td>38</td>
+      <td>54</td>
+      <td>55</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>85</td>
+      <td>21</td>
+      <td>54</td>
+      <td>57</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>88</td>
+      <td>22</td>
+      <td>57</td>
+      <td>55</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>89</td>
+      <td>34</td>
+      <td>58</td>
+      <td>60</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>92</td>
+      <td>18</td>
+      <td>59</td>
+      <td>41</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>94</td>
+      <td>40</td>
+      <td>60</td>
+      <td>40</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>95</td>
+      <td>32</td>
+      <td>60</td>
+      <td>42</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>96</td>
+      <td>24</td>
+      <td>60</td>
+      <td>52</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>98</td>
+      <td>27</td>
+      <td>60</td>
+      <td>50</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>100</td>
+      <td>20</td>
+      <td>61</td>
+      <td>49</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>101</td>
+      <td>23</td>
+      <td>62</td>
+      <td>41</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>104</td>
+      <td>26</td>
+      <td>62</td>
+      <td>55</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>106</td>
+      <td>21</td>
+      <td>62</td>
+      <td>42</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>112</td>
+      <td>19</td>
+      <td>63</td>
+      <td>54</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>113</td>
+      <td>38</td>
+      <td>64</td>
+      <td>42</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>114</td>
+      <td>19</td>
+      <td>64</td>
+      <td>46</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>115</td>
+      <td>18</td>
+      <td>65</td>
+      <td>48</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>116</td>
+      <td>19</td>
+      <td>65</td>
+      <td>50</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>121</td>
+      <td>27</td>
+      <td>67</td>
+      <td>56</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>122</td>
+      <td>38</td>
+      <td>67</td>
+      <td>40</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>123</td>
+      <td>40</td>
+      <td>69</td>
+      <td>58</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>125</td>
+      <td>23</td>
+      <td>70</td>
+      <td>29</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>133</td>
+      <td>25</td>
+      <td>72</td>
+      <td>34</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>143</td>
+      <td>28</td>
+      <td>76</td>
+      <td>40</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>170</td>
+      <td>32</td>
+      <td>87</td>
+      <td>63</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>185</td>
+      <td>41</td>
+      <td>99</td>
+      <td>39</td>
+      <td>3</td>
+    </tr>
+  </tbody>
+</table></div>
+          </details>
+        </section>
+
+  <div class="footer">Bao cao duoc tao tu du lieu thuc te &mdash; K-Means Clustering</div>
+</main>
+
+</body>
+</html>
